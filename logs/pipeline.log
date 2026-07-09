@@ -1,0 +1,36 @@
+2026-07-09 13:03:45,437 | INFO    | load_stage | step 1: staging load started
+2026-07-09 13:03:45,437 | INFO    | load_stage | patient file: d:\Project\fhir-allergy-dw\data\input\Patient.ndjson
+2026-07-09 13:03:45,437 | INFO    | load_stage | allergy file: d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson
+2026-07-09 13:03:45,440 | INFO    | load_stage | parsed: 10 patients, 36 allergies, 2 rejects, 12 warnings
+2026-07-09 13:03:45,440 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\Patient.ndjson line 2: Patient 644d85af-aaf9-4068-ad23-1e55aedd5205 - postal_code is missing or invalid
+2026-07-09 13:03:45,440 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\Patient.ndjson line 4: Patient 8d3e1155-278a-4824-a7e0-fddb24c7c179 - postal_code is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\Patient.ndjson line 6: Patient d33efe23-cef9-40e5-a7c0-6d68c1349e51 - postal_code is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\Patient.ndjson line 7: Patient 3b1a9cb0-e3d3-4bce-8b20-864c3dc7e8c0 - postal_code is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\Patient.ndjson line 9: Patient 21fba439-ca79-411f-a081-37a432a78f3a - postal_code is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 4: Allergy a1e3e9d7-b9e2-4be8-adad-d9ddaea534a7 - category is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 5: Allergy e56cfe0b-1516-4b45-ac73-040ec4e82e3e - category is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 9: Allergy 764536d2-6eef-40cd-8ed6-d85cf6f20e4e - recorded_date is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 10: Allergy 7c1e2337-ae37-4b21-b6b9-415c3cd8c8b4 - recorded_date is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 19: Allergy a19b6548-d6f1-48f9-a98d-dc4608649806 - recorded_date is missing or invalid
+2026-07-09 13:03:45,441 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 20: Allergy b59022c3-ebf9-4df7-9dbd-b155d8dbeb4f - recorded_date is missing or invalid
+2026-07-09 13:03:45,442 | WARNING | load_stage | d:\Project\fhir-allergy-dw\data\input\AllergyIntolerance.ndjson line 35: Allergy 37102efa-fbab-4d1c-bf40-23eefcd4d47e - category is missing or invalid
+2026-07-09 13:03:45,522 | INFO    | load_stage | staging committed: 10 patients, 36 allergies, 2 rejects loaded
+2026-07-09 13:03:45,522 | WARNING | load_stage | ALERT: 2 critical reject(s), 12 non-critical warning(s)
+2026-07-09 13:03:45,522 | WARNING | load_stage | alert details written to: d:\Project\fhir-allergy-dw\alerts/alert_20260709_130345.txt
+2026-07-09 13:04:36,201 | INFO    | load_dim | step 2: dimension load started
+2026-07-09 13:04:36,246 | INFO    | load_dim | dim_patient: 0 old version(s) closed
+2026-07-09 13:04:36,247 | INFO    | load_dim | dim_patient: 10 new version(s) inserted
+2026-07-09 13:04:36,248 | INFO    | load_dim | dim_allergen: 13 row(s) inserted/updated
+2026-07-09 13:04:36,248 | INFO    | load_dim | dim_reaction: 1 row(s) inserted/updated
+2026-07-09 13:04:36,248 | INFO    | load_dim | dim_severity: 1 row(s) inserted/updated
+2026-07-09 13:04:36,249 | INFO    | load_dim | dimensions committed
+2026-07-09 13:05:10,606 | INFO    | load_fact | step 3: fact load started
+2026-07-09 13:05:10,652 | INFO    | load_fact | --- data quality report ---
+2026-07-09 13:05:10,652 | INFO    | load_fact | allergy rows in staging:  36
+2026-07-09 13:05:10,653 | INFO    | load_fact | rejected rows:            2
+2026-07-09 13:05:10,653 | INFO    | load_fact | fact rows loaded/updated: 36
+2026-07-09 13:05:10,653 | INFO    | load_fact | facts w/ unknown patient: 1
+2026-07-09 13:05:10,654 | WARNING | load_fact | some allergies reference patients that are not in the patient file - report to the upstream team. source_allergy_ids: ['2f35bfea-5cf7-4897-b5b0-d412d54999a6']
+2026-07-09 13:05:10,654 | INFO    | load_fact | duplicate facts:          0
+2026-07-09 13:05:10,654 | INFO    | load_fact | facts on old version:     0
+2026-07-09 13:05:10,657 | INFO    | load_fact | fact committed
