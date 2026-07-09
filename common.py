@@ -33,9 +33,8 @@ LOG_FOLDER = os.path.join(BASE_DIR, "logs")
 
 
 def get_logger(name):
-    # one shared log file for the whole pipeline: logs/pipeline.log
-    # Every run will append the logs to the file
-    # Every log line gets a timestamp 
+    # One shared log file for the whole pipeline: logs/pipeline.log
+    # Every run will append the logs to the file and every log line gets a timestamp 
 
     if not os.path.exists(LOG_FOLDER):
         os.makedirs(LOG_FOLDER)
@@ -60,7 +59,7 @@ def get_logger(name):
 
     return logger
 
-# valid values as per the FHIR standard (New ones can be added on Ad-hoc basis)
+# valid values as per the FHIR standards (New ones can be added on Ad-hoc basis)
 VALID_CATEGORIES = ["food", "medication", "environment", "biologic", "pet allergy"]
 
 

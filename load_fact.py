@@ -1,10 +1,5 @@
-# Step 3 -Load FACT table - fact_allergy_event
-# Load fact_allergy_event from staging. The joins to the dimension tables
-# pick up the surrogate keys. COALESCE switches missing values to the
-# 'unknown' dimension rows, so every fact row always finds its keys and
-# no record is dropped.
-# ON CONFLICT on the allergy id makes reruns safe: the same allergy
-# updates its existing row instead of creating a duplicate.
+# Step 3 - Load FACT table - fact_allergy_event
+# The joins to the dimension tables pick up the surrogate keys.ON CONFLICT on the source allergy id makes reruns safe.
 
 from common import get_connection, get_logger
 
@@ -65,7 +60,7 @@ def quality_checks(cur, fact_count):
 
     logger.info("fact rows loaded/updated: %d", fact_count)
 
-    # warning: facts linked to the Unknown patient (bad patient reference)
+    # source_allergy_ids of Unknown patient (bad patient reference)
     cur.execute("""
         SELECT f.source_allergy_id
         FROM dw.fact_allergy_event f
@@ -73,6 +68,7 @@ def quality_checks(cur, fact_count):
         WHERE d.patient_id = 'UNKNOWN'
         ORDER BY f.source_allergy_id
     """)
+
     unknown_patient_ids = [row[0] for row in cur.fetchall()]
     unknown_count = len(unknown_patient_ids)
     logger.info("facts w/ unknown patient: %d", unknown_count)
@@ -83,7 +79,7 @@ def quality_checks(cur, fact_count):
             unknown_patient_ids,
         )
 
-    # hard check 1: duplicates would mean the load logic is broken
+    # Duplicate checko n the FACT table.
     cur.execute("""
         SELECT COUNT(*) FROM (
             SELECT source_allergy_id
@@ -92,16 +88,18 @@ def quality_checks(cur, fact_count):
             HAVING COUNT(*) > 1
         ) duplicates
     """)
+
     duplicate_count = cur.fetchone()[0]
     logger.info("duplicate facts:          %d", duplicate_count)
 
-    # hard check 2: facts must always point at the CURRENT patient version
+    # Active record check.
     cur.execute("""
         SELECT COUNT(*)
         FROM dw.fact_allergy_event f
         JOIN dw.dim_patient d ON d.patient_key = f.patient_key
         WHERE d.is_current = FALSE
     """)
+    
     stale_count = cur.fetchone()[0]
     logger.info("facts on old version:     %d", stale_count)
 
@@ -128,6 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# run all three steps in order:  python load_stage.py && python load_dim.py && python load_fact.py
