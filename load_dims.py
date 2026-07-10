@@ -51,7 +51,7 @@ def load_dim_patient(cur):
  
  
 def load_dim_allergen(cur):
-    # one row per (group by code, category, type)
+    # one row per (group by - code, category, type)
     # 'UNKNOWN' (upper) for missing business-key codes, 'unknown' (lower) for missing descriptive attributes.
     sql = """
         INSERT INTO dw.dim_allergen (allergen_code, allergen_display,

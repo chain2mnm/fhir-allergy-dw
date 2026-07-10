@@ -7,6 +7,7 @@ from datetime import date, datetime
 
 import psycopg2
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 config = configparser.ConfigParser()
@@ -17,7 +18,7 @@ DB_PORT = config.getint("database", "port")
 DB_NAME = config.get("database", "dbname")
 DB_USER = config.get("database", "user")
 
-# password: environment variable wins, otherwise take it from config.ini
+# Password: Take it from config.ini (Can also be configured via env variable)
 if "DB_PASSWORD" in os.environ:
     DB_PASSWORD = os.environ["DB_PASSWORD"]
 else:
@@ -44,35 +45,32 @@ def get_logger(name):
         return logger   # already set up
 
     logger.setLevel(logging.INFO)
-    log_format = logging.Formatter(
-        "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s")
+    log_format = logging.Formatter("%(asctime)s | %(levelname)-7s | %(name)s | %(message)s")
 
     # Write to the log file (append mode)
     file_handler = logging.FileHandler(os.path.join(LOG_FOLDER, "pipeline.log"))
     file_handler.setFormatter(log_format)
     logger.addHandler(file_handler)
 
-    # Also show the same messages on the console
+    # Also show them on console terminal
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(log_format)
     logger.addHandler(console_handler)
 
     return logger
 
-# valid values as per the FHIR standards (New ones can be added on Ad-hoc basis)
+# valid category values (New ones can be added on Ad-hoc basis)
 VALID_CATEGORIES = ["food", "medication", "environment", "biologic", "pet allergy"]
 
 
 CATEGORY_FIXES = {
     "environmental": "environment",   
-    #"pet allergy": "environment",    
     #"drug": "medication",
 }
 
 
 def get_connection():
-    conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
-                            user=DB_USER, password=DB_PASSWORD)
+    conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD)
     return conn
 
 
@@ -101,7 +99,7 @@ def clean_text(value):
 
 
 def normalize_category(value):
-    # trim + lowercase, fix known bad values, check against the FHIR list
+    # trim + lowercase, fix known bad values, check against the category list
     text = clean_text(value)
     if text is None:
         return None
@@ -115,7 +113,7 @@ def normalize_category(value):
 
 
 def parse_date(value):
-    # '1971-04-05' -> date, None if missing or invalid
+    # '1971-04-05': date, None if missing or invalid
     text = clean_text(value)
     if text is None:
         return None
@@ -126,7 +124,7 @@ def parse_date(value):
 
 
 def parse_timestamp(value):
-    # '2020-01-01T09:00:00+00:00' -> datetime, None if missing or invalid
+    # '2020-01-01T09:00:00+00:00': datetime, None if missing or invalid
     text = clean_text(value)
     if text is None:
         return None

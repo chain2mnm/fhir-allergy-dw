@@ -12,20 +12,18 @@ from common import (get_connection, create_tables, check_source_files,
  
 logger = get_logger("load_stage")
  
- 
+# func to flag missing values in non-key attributes (patient and allergy files) 
 def flag_missing(warnings, file_path, line_no, record_label, fields):
-    # shared by both parsers - record is still loaded, we just want a
-    # trail of what's missing so it can be chased up later
     for field_name, value in fields.items():
         if value is None:
             warnings.append((file_path, line_no, record_label,
                              field_name + " is missing or invalid"))
  
- 
+# patient file parser 
 def parse_patients(file_path, rejects, warnings):
     patients = []
-    seen_ids = set()  # set, not list - id lookups happen once per line and
-                       # these files can run into the millions of rows
+    seen_ids = set()  
+                       
  
     f = open(file_path, encoding="utf-8")
     line_no = 0
@@ -50,9 +48,8 @@ def parse_patients(file_path, rejects, warnings):
             rejects.append((file_path, line_no, "missing id", line))
             continue
  
-        # duplicates are rejected, not merged/overwritten - staging should be
-        # a faithful copy of the source; any "last write wins" dedup logic
-        # belongs downstream, not here
+        # duplicates are rejected and are not processed in the pipeline
+
         if patient_id in seen_ids:
             rejects.append((file_path, line_no, "duplicate patient id", line))
             continue
@@ -78,7 +75,7 @@ def parse_patients(file_path, rejects, warnings):
         elif family is not None:
             full_name = family
  
-        # same idea for address - take the first entry
+        # same logic for address - take the first entry
         city = None
         state = None
         postal_code = None
@@ -104,7 +101,7 @@ def parse_patients(file_path, rejects, warnings):
                     phone = clean_text(entry.get("value"))
                     break
  
-        # gender: normalize MALE / Male -> male
+        # gender: normalize gender values to lower
         gender = clean_text(rec.get("gender"))
         if gender is not None:
             gender = gender.lower()
@@ -127,7 +124,7 @@ def parse_patients(file_path, rejects, warnings):
     f.close()
     return patients
  
- 
+# asllergies file parser 
 def parse_allergies(file_path, rejects, warnings):
     allergies = []
     seen_ids = set()
@@ -160,9 +157,8 @@ def parse_allergies(file_path, rejects, warnings):
             continue
         seen_ids.add(allergy_id)
  
-        # reference is "Patient/<id>" - we only need the id half. if it's
-        # missing, the row still loads and falls back to Unknown patient
-        # in the fact load rather than getting rejected outright
+        # reference is "Patient/<id>" - we only need the id part. 
+        # If it's missing, the row still loads as Unknown patient
         patient_id = None
         patient_section = rec.get("patient")
         if patient_section is not None:
@@ -171,8 +167,8 @@ def parse_allergies(file_path, rejects, warnings):
                 parts = reference.split("/")
                 patient_id = parts[len(parts) - 1]
  
-        # category can be missing, empty, or hold dirty values - take the
-        # first one that actually cleans up to something usable
+        # category can be missing, empty, or hold corrupt values, 
+        # take the first one that actually cleans up to something usable
         category = None
         category_list = rec.get("category")
         if category_list is not None:
@@ -181,7 +177,8 @@ def parse_allergies(file_path, rejects, warnings):
                     category = normalize_category(value)
                     break
  
-        # display falls back to code.text if coding[0].display isn't set
+        # Reads the coding part of the section and picks up values, 
+        # If display is missing then takes value from text
         allergen_system = None
         allergen_code = None
         allergen_display = None
@@ -196,8 +193,8 @@ def parse_allergies(file_path, rejects, warnings):
             if allergen_display is None:
                 allergen_display = clean_text(code_section.get("text"))
  
-        # not present in the current source files, but FHIR allows it,
-        # so we still read it in case a future extract includes it
+        # Not present in the current source files, 
+        # but source can start populating it in the future
         reaction_code = None
         reaction_display = None
         severity = None
@@ -218,8 +215,7 @@ def parse_allergies(file_path, rejects, warnings):
         criticality = clean_text(rec.get("criticality"))
         recorded_date = parse_timestamp(rec.get("recordedDate"))
  
-        # missing values here map to Unknown dimension rows downstream,
-        # not a hard reject - just flag them so they get chased up
+        # Missing values here map to Unknown dimension rows downstream, not a hard reject but just flags them.
         flag_missing(warnings, file_path, line_no, "Allergy " + allergy_id,
                     {"category": category, "recorded_date": recorded_date,
                      "criticality": criticality, "allergen_code": allergen_code})
@@ -228,6 +224,7 @@ def parse_allergies(file_path, rejects, warnings):
                allergen_system, allergen_code, allergen_display,
                reaction_code, reaction_display, severity, recorded_date,
                file_path, line_no)
+        
         allergies.append(row)
  
     f.close()
@@ -235,8 +232,8 @@ def parse_allergies(file_path, rejects, warnings):
  
  
 def write_alert(rejects, warnings):
-    # write an alert file so the support team notices the problems.
-    # In real time env, this is where an incident would be raised.
+    # write an alert file so the support/application team notices the problems.
+
     if not os.path.exists(ALERT_FOLDER):
         os.makedirs(ALERT_FOLDER)
     now = datetime.now()
@@ -287,7 +284,7 @@ def main():
         cur = conn.cursor()
         create_tables(cur)
  
-        # staging is emptied and fully reloaded on every run
+        # staging is always a truncate load for every load
         cur.execute("TRUNCATE staging.stg_patient")
         cur.execute("TRUNCATE staging.stg_allergy")
         cur.execute("TRUNCATE staging.rejects")
